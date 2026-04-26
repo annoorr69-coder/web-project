@@ -1,0 +1,95 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper Functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email == "annoorr69@gmail.com";
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // --- Users ---
+    match /users/{userId} {
+      function isValidUser(data) {
+        return data.uid == userId &&
+               data.email is string &&
+               data.role in ['user', 'admin'] &&
+               data.aiUsage.queriesToday is number &&
+               data.aiUsage.lastResetDate is string;
+      }
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isSignedIn() && isValidUser(request.resource.data);
+      allow update: if (isOwner(userId) && 
+                       request.resource.data.role == resource.data.role &&
+                       request.resource.data.subscriptionStatus == resource.data.subscriptionStatus &&
+                       isValidUser(request.resource.data)) || isAdmin();
+    }
+
+    // --- Remittances ---
+    match /remittances/{remittanceId} {
+      function isValidRemittance(data) {
+        return data.userId == request.auth.uid &&
+               data.amount is number &&
+               data.amount > 0 &&
+               data.currency in ['SAR', 'AED', 'USD', 'EUR'] &&
+               data.date is string &&
+               data.createdAt is string;
+      }
+      // Explicit evaluation of resource.data to prevent unauthorized list queries
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidRemittance(request.resource.data);
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow update: if false; 
+    }
+
+    // --- Settings ---
+    match /settings/{docId} {
+      allow read: if true; // Publicly readable for app branding
+      allow write: if isAdmin();
+    }
+
+    // --- Admin only collections ---
+    match /payments/{paymentId} {
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow write: if isAdmin();
+    }
+
+    match /apiKeys/{keyId} {
+      allow read, write: if isAdmin();
+    }
+
+    // --- Job Posts ---
+    match /jobPosts/{jobId} {
+      allow read: if true; // Publicly readable for all workers
+      allow write: if isAdmin();
+    }
+
+    // --- Saved Jobs ---
+    match /users/{userId}/savedJobs/{jobId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+
+    // --- Notifications ---
+    match /notifications/{notifId} {
+      allow read: if true; // Users need to listen to incoming alerts
+      allow write: if isAdmin();
+    }
+  }
+}

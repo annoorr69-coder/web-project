@@ -1,0 +1,127 @@
+{
+  "entities": {
+    "users": {
+      "title": "User",
+      "description": "Application users",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "user"] },
+        "subscriptionStatus": { "type": "string", "enum": ["Free", "Pro"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "isBanned": { "type": "boolean" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "payments": {
+      "title": "Payment",
+      "description": "Subscription payments",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "amount": { "type": "number" },
+        "currency": { "type": "string" },
+        "status": { "type": "string", "enum": ["Success", "Pending", "Failed"] },
+        "planType": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "amount", "status"]
+    },
+    "apiKeys": {
+      "title": "API Key",
+      "description": "System API keys",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "key": { "type": "string" },
+        "status": { "type": "string", "enum": ["Active", "Inactive"] },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "key"]
+    },
+    "settings": {
+      "title": "App Settings",
+      "description": "Global application configuration",
+      "type": "object",
+      "properties": {
+        "dailyFreeScanLimit": { "type": "number" },
+        "maintenanceMode": { "type": "boolean" },
+        "enableAds": { "type": "boolean" },
+        "geminiApiKey": { "type": "string" },
+        "appLogo": { "type": "string" }
+      }
+    },
+    "remittances": {
+      "title": "Remittance",
+      "description": "User remittance records",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "amount": { "type": "number" },
+        "currency": { "type": "string" },
+        "date": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "amount", "currency", "date"]
+    },
+    "jobPosts": {
+      "title": "Job Post",
+      "description": "Daily job updates for Dubai",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "salary": { "type": "string" },
+        "location": { "type": "string" },
+        "contactInfo": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "sourceUrl": { "type": "string" }
+      },
+      "required": ["title", "location", "contactInfo", "createdAt"]
+    },
+    "savedJobs": {
+      "title": "Saved Job",
+      "description": "Jobs saved by a user",
+      "type": "object",
+      "properties": {
+        "jobId": { "type": "string" },
+        "title": { "type": "string" },
+        "savedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["jobId", "title", "savedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "users",
+      "description": "User profiles"
+    },
+    "/users/{userId}/savedJobs/{jobId}": {
+      "schema": "savedJobs",
+      "description": "Saved job records for a user"
+    },
+    "/jobPosts/{jobId}": {
+      "schema": "jobPosts",
+      "description": "Global job posts"
+    },
+    "/payments/{paymentId}": {
+      "schema": "payments",
+      "description": "Transaction records"
+    },
+    "/apiKeys/{keyId}": {
+      "schema": "apiKeys",
+      "description": "System API keys"
+    },
+    "/settings/global": {
+      "schema": "settings",
+      "description": "Global app settings"
+    },
+    "/remittances/{remittanceId}": {
+      "schema": "remittances",
+      "description": "User remittance history"
+    }
+  }
+}
